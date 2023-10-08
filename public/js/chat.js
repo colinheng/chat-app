@@ -1,24 +1,65 @@
 const socket = io()
 
+// DOM elements that will be used frequently
+const $messageForm = document.querySelector('#message-form')
+const $messageFormInput = $messageForm.querySelector('input')
+const $messageFormButton = $messageForm.querySelector('button')
+const $sendLocationButton = document.querySelector('#send-location')
+const $messages = document.querySelector('#messages')
+
+// Templates
+const messageTemplate = document.querySelector('#message-template').innerHTML
+const locationTemplate = document.querySelector('#location-template').innerHTML
+
 // A message has been received
 socket.on('msg', (msg) => {
 	console.log(msg)
+	const html = Mustache.render(messageTemplate, {
+		msg: msg.text,
+		createdAt: moment(msg.createdAt).format('h:mm a'),
+	})
+	$messages.insertAdjacentHTML('beforeend', html)
+})
+
+// A location message has been received
+socket.on('locationMessage', (url) => {
+	console.log(url)
+	// const msg = `<a href="${m}">Location</a>`
+	const html = Mustache.render(locationTemplate, {
+		url: url.url,
+		createdAt: moment(url.createdAt).format('h:mm a'),
+	})
+	$messages.insertAdjacentHTML('beforeend', html)
 })
 
 // Send a message to the server
-document.querySelector('#message-form').addEventListener('submit', (e) => {
+$messageForm.addEventListener('submit', (e) => {
 	e.preventDefault()
+
+	// Disable button after sending message to prevent dupes
+	$messageFormButton.setAttribute('disabled', 'disabled')
+
 	const msg = e.target.elements.message.value
 	socket.emit('sendMessage', msg, (m) => {
 		console.log(`Message status: ${m} `)
 	})
+
+	// Disable button after sending message to prevent dupes
+	$messageFormButton.removeAttribute('disabled')
+
+	// Clear value and set focus
+	$messageFormInput.value = ''
+	$messageFormInput.focus()
 })
 
 // Send location to the server
-document.querySelector('#send-location').addEventListener('click', () => {
+$sendLocationButton.addEventListener('click', () => {
 	if (!navigator.geolocation) {
 		return
 	}
+
+	$sendLocationButton.setAttribute('disabled', 'disabled')
+	$sendLocationButton.innerHTML = 'Sharing location'
 
 	navigator.geolocation.getCurrentPosition((position) => {
 		console.log(
@@ -30,9 +71,18 @@ document.querySelector('#send-location').addEventListener('click', () => {
 				latitude: position.coords.latitude,
 				longitude: position.coords.longitude,
 			},
-			(m) => {
-				console.log(`Sharing status: ${m}`)
+			(msg) => {
+				console.log(`Sharing status: ${msg}`)
+
+				const html = Mustache.render(messageTemplate, {
+					msg,
+					createdAt: moment(new Date().getTime()).format('h:mm a'),
+				})
+				$messages.insertAdjacentHTML('beforeend', html)
 			}
 		)
 	})
+	$sendLocationButton.innerHTML = 'Location shared'
+	$sendLocationButton.removeAttribute('disabled')
+	$sendLocationButton.innerHTML = 'Share location again'
 })

@@ -3,6 +3,7 @@ const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
 const Filter = require('bad-words')
+const { genMsg, genLocMsg } = require('./utils/messages')
 
 const app = express()
 const server = http.createServer(app)
@@ -16,8 +17,8 @@ app.use(express.static(publicRoot))
 io.on('connection', (socket) => {
 	// A new client has connected
 	console.log('New WebSocket connection')
-	socket.emit('msg', 'New connection detected. Welcome!')
-	socket.broadcast.emit('msg', 'A new user has connected!')
+	socket.emit('msg', genMsg('New connection detected. Welcome!'))
+	socket.broadcast.emit('msg', genMsg('A new user has connected!'))
 
 	// A new message has been received from a client
 	socket.on('sendMessage', (msg, callback) => {
@@ -25,22 +26,24 @@ io.on('connection', (socket) => {
 		if (filter.isProfane(msg)) {
 			return callback('No bad words ok!')
 		}
-		io.emit('msg', msg)
+		io.emit('msg', genMsg(msg))
 		callback('Received by server.')
 	})
 
 	// A location has been shared by a client
 	socket.on('sendLocation', (coords, callback) => {
 		socket.broadcast.emit(
-			'msg',
-			`https://google.com/maps?q=${coords.latitude},${coords.longitude}`
+			'locationMessage',
+			genLocMsg(
+				`https://google.com/maps?q=${coords.latitude},${coords.longitude}`
+			)
 		)
 		callback('Location shared.')
 	})
 
 	// A client has disconnected
 	socket.on('disconnect', () => {
-		io.emit('msg', 'A user has left.')
+		io.emit('msg', genMsg('A user has left.'))
 	})
 })
 
