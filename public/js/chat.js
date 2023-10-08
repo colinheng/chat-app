@@ -1,9 +1,11 @@
 const socket = io()
 
+// A message has been received
 socket.on('msg', (msg) => {
 	console.log(msg)
 })
 
+// Send a message to the server
 document.querySelector('#message-form').addEventListener('submit', (e) => {
 	e.preventDefault()
 	const msg = e.target.elements.message.value
@@ -12,6 +14,7 @@ document.querySelector('#message-form').addEventListener('submit', (e) => {
 	})
 })
 
+// Send location to the server
 document.querySelector('#send-location').addEventListener('click', () => {
 	if (!navigator.geolocation) {
 		return

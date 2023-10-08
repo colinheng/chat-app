@@ -14,10 +14,12 @@ const publicRoot = path.join(__dirname, '../public')
 app.use(express.static(publicRoot))
 
 io.on('connection', (socket) => {
+	// A new client has connected
 	console.log('New WebSocket connection')
 	socket.emit('msg', 'New connection detected. Welcome!')
 	socket.broadcast.emit('msg', 'A new user has connected!')
 
+	// A new message has been received from a client
 	socket.on('sendMessage', (msg, callback) => {
 		const filter = new Filter()
 		if (filter.isProfane(msg)) {
@@ -27,6 +29,7 @@ io.on('connection', (socket) => {
 		callback('Received by server.')
 	})
 
+	// A location has been shared by a client
 	socket.on('sendLocation', (coords, callback) => {
 		socket.broadcast.emit(
 			'msg',
@@ -35,6 +38,7 @@ io.on('connection', (socket) => {
 		callback('Location shared.')
 	})
 
+	// A client has disconnected
 	socket.on('disconnect', () => {
 		io.emit('msg', 'A user has left.')
 	})
