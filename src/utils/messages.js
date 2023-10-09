@@ -1,12 +1,14 @@
-const genMsg = (text) => {
+const genMsg = (username, text) => {
 	return {
+		username,
 		text,
 		createdAt: new Date().getTime(),
 	}
 }
 
-const genLocMsg = (url) => {
+const genLocMsg = (username, url) => {
 	return {
+		username,
 		url,
 		createdAt: new Date().getTime(),
 	}

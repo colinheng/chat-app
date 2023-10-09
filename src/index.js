@@ -4,7 +4,14 @@ const express = require('express')
 const socketio = require('socket.io')
 const Filter = require('bad-words')
 const { genMsg, genLocMsg } = require('./utils/messages')
+const {
+	addUser,
+	removeUser,
+	getUser,
+	getUsersInRoom,
+} = require('./utils/users')
 
+const adminName = 'CHAT!'
 const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
@@ -17,33 +24,76 @@ app.use(express.static(publicRoot))
 io.on('connection', (socket) => {
 	// A new client has connected
 	console.log('New WebSocket connection')
-	socket.emit('msg', genMsg('New connection detected. Welcome!'))
-	socket.broadcast.emit('msg', genMsg('A new user has connected!'))
+
+	// A join request has been received
+	socket.on('join', (options, callback) => {
+		const { error, user } = addUser({
+			id: socket.id,
+			...options,
+		})
+		if (error) {
+			return callback(error)
+		}
+
+		socket.join(user.room)
+
+		socket.emit(
+			'msg',
+			genMsg(adminName, `New connection detected. Welcome to ${user.room}!`)
+		)
+		socket.broadcast
+			.to(user.room)
+			.emit('msg', genMsg(adminName, `${user.username} has joined.`))
+
+		io.to(user.room).emit('roomupdate', {
+			room: user.room,
+			users: getUsersInRoom(user.room),
+		})
+
+		callback()
+	})
 
 	// A new message has been received from a client
 	socket.on('sendMessage', (msg, callback) => {
+		const user = getUser(socket.id)
 		const filter = new Filter()
 		if (filter.isProfane(msg)) {
-			return callback('No bad words ok!')
+			return callback(`Hey ${user.username}, no bad words ok!`)
 		}
-		io.emit('msg', genMsg(msg))
+		io.to(user.room).emit('msg', genMsg(user.username, msg))
 		callback('Received by server.')
 	})
 
 	// A location has been shared by a client
 	socket.on('sendLocation', (coords, callback) => {
-		socket.broadcast.emit(
-			'locationMessage',
-			genLocMsg(
-				`https://google.com/maps?q=${coords.latitude},${coords.longitude}`
-			)
-		)
-		callback('Location shared.')
+		const user = getUser(socket.id)
+		if (user) {
+			socket.broadcast
+				.to(user.room)
+				.emit(
+					'locationMessage',
+					genLocMsg(
+						user.username,
+						`https://google.com/maps?q=${coords.latitude},${coords.longitude}`
+					)
+				)
+			callback('Location shared.')
+		}
 	})
 
 	// A client has disconnected
 	socket.on('disconnect', () => {
-		io.emit('msg', genMsg('A user has left.'))
+		const user = removeUser(socket.id)
+		if (user) {
+			io.to(user.room).emit(
+				'msg',
+				genMsg(adminName, `${user.username} has left.`)
+			)
+			io.to(user.room).emit('roomupdate', {
+				room: user.room,
+				users: getUsersInRoom(user.room),
+			})
+		}
 	})
 })
 
