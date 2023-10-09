@@ -42,7 +42,7 @@ const autoScroll = () => {
 
 // A message has been received
 socket.on('msg', (msg) => {
-	console.log(msg)
+	// console.log(msg)
 	const html = Mustache.render(messageTemplate, {
 		username: msg.username,
 		msg: msg.text,
@@ -54,7 +54,7 @@ socket.on('msg', (msg) => {
 
 // A location message has been received
 socket.on('locationMessage', (url) => {
-	console.log(url)
+	// console.log(url)
 	// const msg = `<a href="${m}">Location</a>`
 	const html = Mustache.render(locationTemplate, {
 		username: url.username,
@@ -82,7 +82,7 @@ $messageForm.addEventListener('submit', (e) => {
 
 	const msg = e.target.elements.message.value
 	socket.emit('sendMessage', msg, (m) => {
-		console.log(`Message status: ${m} `)
+		// console.log(`Message status: ${m} `)
 	})
 
 	// Disable button after sending message to prevent dupes
@@ -103,9 +103,9 @@ $sendLocationButton.addEventListener('click', () => {
 	$sendLocationButton.innerHTML = 'Sharing location'
 
 	navigator.geolocation.getCurrentPosition((position) => {
-		console.log(
-			`Sharing my location: https://google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`
-		)
+		// console.log(
+		// 	`Sharing my location: https://google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`
+		// )
 		socket.emit(
 			'sendLocation',
 			{
@@ -113,7 +113,7 @@ $sendLocationButton.addEventListener('click', () => {
 				longitude: position.coords.longitude,
 			},
 			(msg) => {
-				console.log(`Sharing status: ${msg}`)
+				// console.log(`Sharing status: ${msg}`)
 
 				const html = Mustache.render(messageTemplate, {
 					msg,
@@ -130,7 +130,7 @@ $sendLocationButton.addEventListener('click', () => {
 
 socket.emit('join', { username, room }, (error) => {
 	if (error) {
-		console.log(error)
+		// console.log(error)
 		location.href = '/'
 	}
 })

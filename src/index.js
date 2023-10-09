@@ -23,7 +23,7 @@ app.use(express.static(publicRoot))
 
 io.on('connection', (socket) => {
 	// A new client has connected
-	console.log('New WebSocket connection')
+	// console.log('New WebSocket connection')
 
 	// A join request has been received
 	socket.on('join', (options, callback) => {
@@ -98,5 +98,5 @@ io.on('connection', (socket) => {
 })
 
 server.listen(port, () => {
-	console.log(`Server listen on port ${port}.`)
+	console.log(`Server listening on port ${port}.`)
 })
